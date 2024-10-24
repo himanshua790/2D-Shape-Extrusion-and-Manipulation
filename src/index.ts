@@ -1,10 +1,13 @@
+import { DefaultLoadingScreen } from '@babylonjs/core/Loading/loadingScreen';
 import './index.css'
-import * as BABYLON from '@babylonjs/core'
-import '@babylonjs/loaders/glTF'
-import { initPhysics, addPhysicsImposter } from './physics'
-import { addPostProcess } from './addPostProcess'
-
-BABYLON.DefaultLoadingScreen.prototype.displayLoadingUI = () => {}
+import  { Engine } from '@babylonjs/core/Engines/engine';
+import { WebGPUEngine } from '@babylonjs/core/Engines/webgpuEngine';
+import { Scene } from '@babylonjs/core/scene';
+import { Color3, Vector3 } from '@babylonjs/core/Maths/math';
+import {ArcRotateCamera} from "@babylonjs/core/Cameras/arcRotateCamera"
+import {MeshBuilder} from "@babylonjs/core/Meshes/meshBuilder"
+import { getGridMaterial } from './materials/gridMaterial';
+DefaultLoadingScreen.prototype.displayLoadingUI = () => {}
 
 const canvas = document.createElement('canvas')
 document.body.append(canvas)
@@ -12,30 +15,25 @@ document.body.append(canvas)
 const antialias = true
 const adaptToDeviceRatio = true
 
-let engine: BABYLON.Engine | BABYLON.WebGPUEngine
+let engine: Engine | WebGPUEngine
 
 if (navigator.gpu) {
-  engine = new BABYLON.WebGPUEngine(canvas, { antialias, adaptToDeviceRatio })
-  await (engine as BABYLON.WebGPUEngine).initAsync()
+  engine = new WebGPUEngine(canvas, { antialias, adaptToDeviceRatio })
+  await (engine as WebGPUEngine).initAsync()
 } else {
-  engine = new BABYLON.Engine(canvas, antialias, {}, adaptToDeviceRatio)
+  engine = new Engine(canvas, antialias, {}, adaptToDeviceRatio)
 }
 
-const scene = new BABYLON.Scene(engine)
+const scene = new Scene(engine)
 
 const alpha = 0
 const beta = 0
 const radius = 5
-const target = new BABYLON.Vector3(-4, 1, 5)
-const camera = new BABYLON.ArcRotateCamera('camera', alpha, beta, radius, target, scene)
+const target = new Vector3(-4, 1, 5)
+const camera = new ArcRotateCamera('camera', alpha, beta, radius, target, scene)
 
-camera.setTarget(BABYLON.Vector3.Zero())
+camera.setTarget(Vector3.Zero())
 camera.attachControl(canvas, true)
-
-await Promise.all([
-  BABYLON.SceneLoader.AppendAsync('assets/glb/', 'pixel_room.glb', scene),
-  initPhysics(scene)
-])
 
 let inspectorReady = false
 let inspectorOpen = true
@@ -69,22 +67,13 @@ for (const texture of scene.textures) {
 }
 
 {
-  const width = 3.8
-  const height = 3.8
+  const width = 10
+  const height = 10
   const subdivisions = 1
-  const ground = BABYLON.MeshBuilder.CreateGround('ground', { width, height, subdivisions }, scene)
+  const ground = MeshBuilder.CreateGround('ground', { width, height, subdivisions }, scene)
   ground.position.y = -0.01
-  addPhysicsImposter(ground, BABYLON.PhysicsShapeType.BOX, scene, 0)
-}
 
-{
-  const segments = 32
-  const diameter = 1
-  const sphere = BABYLON.MeshBuilder.CreateSphere('sphere', { segments, diameter }, scene)
-  sphere.position.y = 5
-  addPhysicsImposter(sphere, BABYLON.PhysicsShapeType.SPHERE, scene)
+  ground.material = getGridMaterial("ground", scene);
 }
-
-addPostProcess(scene, [camera])
 
 engine.runRenderLoop(() => scene.render())

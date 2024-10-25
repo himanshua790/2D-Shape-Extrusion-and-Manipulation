@@ -7,13 +7,17 @@
     "check": "tsc"
   },
   "devDependencies": {
+    "@types/earcut": "^2.1.4",
     "typescript": "^5.0.4",
     "vite": "^4.3.1",
     "vite-plugin-static-copy": "^0.14.0"
   },
   "dependencies": {
     "@babylonjs/core": "^7.31.0",
+    "@babylonjs/gui": "^7.31.0",
     "@babylonjs/inspector": "^7.31.0",
-    "@babylonjs/materials": "^7.31.0"
+    "@babylonjs/materials": "^7.31.0",
+    "earcut": "^3.0.0",
+    "zustand": "^5.0.0"
   }
 }

@@ -1,79 +1,79 @@
-import { DefaultLoadingScreen } from '@babylonjs/core/Loading/loadingScreen';
-import './index.css'
-import  { Engine } from '@babylonjs/core/Engines/engine';
-import { WebGPUEngine } from '@babylonjs/core/Engines/webgpuEngine';
-import { Scene } from '@babylonjs/core/scene';
-import { Color3, Vector3 } from '@babylonjs/core/Maths/math';
-import {ArcRotateCamera} from "@babylonjs/core/Cameras/arcRotateCamera"
-import {MeshBuilder} from "@babylonjs/core/Meshes/meshBuilder"
-import { getGridMaterial } from './materials/gridMaterial';
-DefaultLoadingScreen.prototype.displayLoadingUI = () => {}
+import { DefaultLoadingScreen } from "@babylonjs/core/Loading/loadingScreen";
+import "./index.css";
+import { Engine } from "@babylonjs/core/Engines/engine";
+import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
+import { Scene } from "@babylonjs/core/scene";
+import { Color3, Vector3 } from "@babylonjs/core/Maths/math";
+import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { getGridMaterial } from "./materials/gridMaterial";
+import { addButtonObservable } from "./utils/Observables";
+import { HemisphericLight } from "@babylonjs/core";
+import { addBottomGui } from "./GUI/BottomGui";
+import useBabylonState from "./lib/useBabylonState"; // Import Zustand store
 
-const canvas = document.createElement('canvas')
-document.body.append(canvas)
+DefaultLoadingScreen.prototype.displayLoadingUI = () => {};
 
-const antialias = true
-const adaptToDeviceRatio = true
+const canvas = document.createElement("canvas");
+document.body.append(canvas);
 
-let engine: Engine | WebGPUEngine
+const antialias = true;
+const adaptToDeviceRatio = true;
+
+let engine: Engine | WebGPUEngine;
 
 if (navigator.gpu) {
-  engine = new WebGPUEngine(canvas, { antialias, adaptToDeviceRatio })
-  await (engine as WebGPUEngine).initAsync()
+  engine = new WebGPUEngine(canvas, { antialias, adaptToDeviceRatio });
+  await (engine as WebGPUEngine).initAsync();
 } else {
-  engine = new Engine(canvas, antialias, {}, adaptToDeviceRatio)
+  engine = new Engine(canvas, antialias, {}, adaptToDeviceRatio);
 }
 
-const scene = new Scene(engine)
+const scene = new Scene(engine);
 
-const alpha = 0
-const beta = 0
-const radius = 5
-const target = new Vector3(-4, 1, 5)
-const camera = new ArcRotateCamera('camera', alpha, beta, radius, target, scene)
+// Store the scene in Zustand state
+useBabylonState.getState().setScene(scene);
 
-camera.setTarget(Vector3.Zero())
-camera.attachControl(canvas, true)
+const alpha = 0;
+const beta = 0;
+const radius = 5;
+const target = new Vector3(-4, 1, 5);
+const camera = new ArcRotateCamera(
+  "camera",
+  alpha,
+  beta,
+  radius,
+  target,
+  scene
+);
 
-let inspectorReady = false
-let inspectorOpen = true
+camera.setTarget(Vector3.Zero());
+camera.attachControl(canvas, true);
 
-if (import.meta.env.MODE === 'development') {
-  window.addEventListener('keydown', async ({ key }) => {
-    if (key.toLowerCase() !== 'i') return
-  
-    if (inspectorReady === false) {
-      await import('@babylonjs/core/Debug/debugLayer')
-      await import('@babylonjs/inspector')
-      inspectorReady = true
-    }
-
-    if (inspectorOpen === true) {
-      localStorage.setItem('inspector', 'true')
-      scene.debugLayer.hide()
-    } else {
-      localStorage.removeItem('inspector')
-      scene.debugLayer.show()
-    }
-  })
-
-  if (localStorage.getItem('inspector')) {
-    scene.debugLayer.show()
-  }  
-}
+// Light Creation
+const light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
+light.intensity = 0.7;
 
 for (const texture of scene.textures) {
-  texture.updateSamplingMode(1)
+  texture.updateSamplingMode(1);
 }
 
-{
-  const width = 10
-  const height = 10
-  const subdivisions = 1
-  const ground = MeshBuilder.CreateGround('ground', { width, height, subdivisions }, scene)
-  ground.position.y = -0.01
+// Creating Base Mesh and using the Zustand store for points and shapes
+const width = 10;
+const height = 10;
+const subdivisions = 1;
+const ground = MeshBuilder.CreateGround(
+  "ground",
+  { width, height, subdivisions },
+  scene
+);
+ground.position.y = -0.01;
+ground.material = getGridMaterial("ground", scene);
 
-  ground.material = getGridMaterial("ground", scene);
-}
+// Add button observables with updated Zustand state
+addButtonObservable();
+// Add GUI and functionality
+addBottomGui();
 
-engine.runRenderLoop(() => scene.render())
+// Run the Babylon.js render loop
+engine.runRenderLoop(() => scene.render());

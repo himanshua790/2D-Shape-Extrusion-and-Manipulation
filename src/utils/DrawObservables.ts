@@ -9,14 +9,16 @@ import {
   StandardMaterial,
   Vector3,
 } from "@babylonjs/core";
-import useBabylonState from "../state/GlobalState";
 import { getPointerMaterial } from "../materials/PointerMaterial";
+import useBabylonState from "../state/GlobalState";
 import {
   attachGizmoAndHandleUpdates,
   createVertexMarkersAndLines,
 } from "./EditVertices";
 
+// Main function to add observables for drawing, moving, and editing meshes
 export function addButtonObservable() {
+  // Retrieve the current scene from the global state
   const scene = useBabylonState.getState().getScene();
   if (!scene) return;
 
@@ -28,9 +30,9 @@ export function addButtonObservable() {
   const tempPoints: Mesh[] = [];
   const canvas = scene.getEngine().getRenderingCanvas();
   const ground = scene.getMeshByName("ground");
-  console.log({ ground });
   const camera = scene.activeCamera;
 
+  // Function to get the position on the ground mesh where the pointer is located
   const getGroundPosition = () => {
     const pickInfo = scene.pick(
       scene.pointerX,
@@ -40,6 +42,7 @@ export function addButtonObservable() {
     return pickInfo?.hit ? pickInfo.pickedPoint : null;
   };
 
+  // Handler for tap events on the ground mesh to create points, middle-click events, and right-click actions
   const onDrawPointerTapHandler = (pointerInfo: PointerInfo) => {
     if (!pointerInfo.pickInfo) return;
 
@@ -62,6 +65,7 @@ export function addButtonObservable() {
     }
   };
 
+  // Creates a new point at the clicked location on the ground and adds it to the points array
   function createPoint(pointerInfo: PointerInfo) {
     const pickedPoint = pointerInfo?.pickInfo?.pickedPoint;
     if (pickedPoint) {
@@ -80,6 +84,7 @@ export function addButtonObservable() {
       tempPoints.push(pointSphere);
       useBabylonState.getState().setPoints(points);
 
+      // Dispatches a custom event to notify that a point has been created
       const event = new CustomEvent("pointCreated", {
         detail: tempPoints,
       });
@@ -87,8 +92,10 @@ export function addButtonObservable() {
     }
   }
 
+  // Handles right-click actions to create a closed shape for extrusion
   function onRightClick() {
     if (points.length < 3) {
+      // Notifies the user to draw at least three points before closing the shape
       const event = new CustomEvent("updateInstructions", {
         detail: "Please draw at least 3 points",
       });
@@ -108,59 +115,63 @@ export function addButtonObservable() {
     useBabylonState.getState().setPoints([]); // Reset points in the state
     useBabylonState.getState().setShapeToExtrude(shapeToExtrude); // Update shapeToExtrude in state
 
-    // remove temp sphere from scene
+    // Dispose of temporary spheres created for points
     tempPoints.forEach((point) => {
       point.dispose();
     });
     points = []; // Reset local points array for the next shape
+
+    // Notify that the shape is complete and extrusion is enabled
     const event = new CustomEvent("updateInstructions", {
-      detail: "Shape created! Extrution enabled",
+      detail: "Shape created! Extrusion enabled",
     });
     window.dispatchEvent(event);
   }
 
-  // Handlers for Move Mode
+  // Pointer handlers for dragging (moving) the mesh
   const onPointerDownDrag = (evt: PointerEvent) => {
     if (evt.button !== 0) return;
 
+    // Checks if a shapeExtruded mesh is picked for dragging
     const pickInfo = scene.pick(
       scene.pointerX,
       scene.pointerY,
       (mesh) => mesh !== ground && mesh.id.startsWith("shapeExtruded")
     );
-    console.log("onPointerDownDrag", pickInfo, pickInfo.pickedMesh);
     if (pickInfo?.hit) {
       currentMesh = pickInfo.pickedMesh;
       startingPoint = getGroundPosition();
 
+      // Disables camera controls while dragging
       if (startingPoint && camera) {
         setTimeout(() => camera.detachControl(canvas), 0);
       }
     }
   };
 
+  // Handles releasing the mesh after drag (ends the move action)
   const onPointerUpDrag = () => {
     if (startingPoint && currentMesh) {
-      console.log("onPointerUpDrag");
       const material = new StandardMaterial("extrudedMaterial", scene);
       material.emissiveColor = new Color3(0, 128, 128);
       currentMesh.material = material;
-      camera?.attachControl(canvas, true);
+      camera?.attachControl(canvas, true); // Reattaches camera control
       startingPoint = null;
       currentMesh = null;
     }
   };
 
+  // Handles pointer movement while dragging, updates the mesh position
   const onPointerMoveDrag = () => {
     if (!startingPoint || !currentMesh) return;
 
-    console.log("onPointerMoveDrag");
     const current = getGroundPosition();
     if (!current) return;
 
     const diff = current.subtract(startingPoint);
     currentMesh.position.addInPlace(diff);
 
+    // Update the position of lines associated with the mesh
     const lineMeshId = `lines${currentMesh.id.slice(13)}`;
     const lineMesh = scene.getMeshById(lineMeshId);
     lineMesh?.position.addInPlace(diff);
@@ -168,58 +179,60 @@ export function addButtonObservable() {
     startingPoint = current;
   };
 
-  // Selecting the Extruded Mesh on Edit Mode
+  // Highlights the mesh on pointer movement in edit mode
   const hl = new HighlightLayer("hl", scene);
-  // Add the highlight layer.
   const onPointerEditMove = function () {
-    console.log("onPointerEditMove");
     const result = scene.pick(scene.pointerX, scene.pointerY);
     hl.removeAllMeshes();
-    // mesh !== ground && mesh.id.startsWith("shapeExtruded")
     if (result.pickedMesh && result.pickedMesh.id.startsWith("shapeExtruded")) {
       useBabylonState.getState().setSelectedMesh(result.pickedMesh as Mesh);
       hl.addMesh(result.pickedMesh as Mesh, Color3.Blue());
     }
   };
 
+  // Handles pointer down events in edit mode, initializes vertex markers and gizmos
   const onPointerEditDown = function (evt: PointerEvent) {
-    console.log("onPointerEditDown");
     const selectedMesh = useBabylonState.getState().getSelectedMesh();
     if (selectedMesh) {
-      console.log(selectedMesh);
       onMeshSelection();
       const mesh = scene.getMeshById(selectedMesh.id);
       if (mesh) {
         const { vertexMarkers, cornerGroups, markerInstances } =
           createVertexMarkersAndLines(mesh, scene);
-        console.log(
-          "attachGizmoAndHandleUpdates",
-          vertexMarkers,
-          // lineMeshes,
-          cornerGroups
-        );
         tempVertexMarkers = vertexMarkers;
         attachGizmoAndHandleUpdates(
           scene,
           mesh as Mesh,
-          vertexMarkers,
           cornerGroups,
           markerInstances
         );
       }
     }
   };
-  const onPointerEditDown2 = function (evt: PointerEvent) {
-    const result = scene.pick(scene.pointerX, scene.pointerY);
-    console.log("onPointerEditDown2", result);
-  };
 
   const onMeshSelection = function () {
+    // Remove object selection event listeners
     canvas?.removeEventListener("pointermove", onPointerEditMove, false);
     canvas?.removeEventListener("pointerdown", onPointerEditDown, false);
   };
 
-  // Manage observers based on the current mode
+  // Cleans up observers and event listeners before switching modes
+  const cleanUp = () => {
+    tempVertexMarkers.forEach((marker) => marker.dispose());
+    tempVertexMarkers = [];
+
+    // Removes all pointer observables and listeners
+    scene.onPointerObservable.removeCallback(onDrawPointerTapHandler);
+
+    canvas?.removeEventListener("pointerdown", onPointerDownDrag);
+    canvas?.removeEventListener("pointerup", onPointerUpDrag);
+    canvas?.removeEventListener("pointermove", onPointerMoveDrag);
+
+    canvas?.removeEventListener("pointermove", onPointerEditMove, false);
+    canvas?.removeEventListener("pointerdown", onPointerEditDown, false);
+  };
+
+  // Adds observers based on the current mode (draw, move, edit)
   const manageObserver = (mode: "draw" | "move" | "edit") => {
     cleanUp();
     if (mode === "draw") {
@@ -234,31 +247,10 @@ export function addButtonObservable() {
     }
   };
 
-  const cleanUp = () => {
-    tempVertexMarkers.forEach((marker) => marker.dispose());
-    tempVertexMarkers = [];
-
-    scene.onPointerObservable.removeCallback(onDrawPointerTapHandler);
-
-    canvas?.removeEventListener("pointerdown", onPointerDownDrag);
-    canvas?.removeEventListener("pointerup", onPointerUpDrag);
-    canvas?.removeEventListener("pointermove", onPointerMoveDrag);
-
-    canvas?.removeEventListener("pointermove", onPointerEditMove, false);
-    canvas?.removeEventListener("pointerdown", onPointerEditDown, false);
-    //
-    canvas?.removeEventListener("pointerdown", onPointerEditDown2, false);
-  };
-
-  // Listener for custom instruction updates
-  window.addEventListener("cleanUp", () => {
-    cleanUp();
-  });
-
-  // Initial setup based on the current mode
+  // Listen for mode changes and set observers accordingly
   manageObserver(useBabylonState.getState().getMode());
 
-  // Subscribe to mode changes to dynamically manage observers
+  // Subscribe to mode changes dynamically
   const unsubscribe = useBabylonState.subscribe(
     (state) => state.mode,
     (mode) => manageObserver(mode),

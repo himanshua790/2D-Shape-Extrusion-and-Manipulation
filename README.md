@@ -1,3 +1,9 @@
+Here's an updated README with the time worked and a link to your WakaTime stats:
+
+---
+
+# README.md
+
 ## Babylon Shape Extrusion & Manipulation Project
 
 This project is a Babylon.js application designed to allow users to draw, extrude, and manipulate 2D shapes on a ground plane, following assignment requirements. Built using Vite, Babylon.js, Havok Physics, and TypeScript, it serves as a foundational template for 3D manipulation projects.
@@ -44,3 +50,13 @@ Create an interactive 3D environment in which users can draw 2D shapes, extrude 
 
 - **Enhanced GUI**: Add a user-friendly interface with clear instructions for each mode.
 - **Conditional Buttons**: Enable and disable buttons based on current mode and shape state.
+
+---
+
+### Development Stats
+
+**WakaTime Stats (Oct 24 - Oct 26, 2024)**  
+Total Time Worked: 11.5 hours  
+[View detailed WakaTime stats](https://wakatime.com/@4aac6ac3-4782-4ee1-a6bf-077e0a29aa8e/projects/zbklmmralc?start=2024-10-20&end=2024-10-26)
+
+---

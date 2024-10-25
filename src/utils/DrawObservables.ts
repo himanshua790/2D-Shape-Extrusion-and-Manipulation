@@ -1,5 +1,6 @@
 import {
   Color3,
+  HighlightLayer,
   Mesh,
   MeshBuilder,
   PointerEventTypes,
@@ -10,6 +11,10 @@ import {
 } from "@babylonjs/core";
 import useBabylonState from "../lib/useBabylonState";
 import { getPointerMaterial } from "../materials/pointerMaterial";
+import {
+  attachGizmoAndHandleUpdates,
+  createVertexMarkersAndLines,
+} from "./EditVertices";
 
 export function addButtonObservable() {
   const scene = useBabylonState.getState().getScene();
@@ -23,6 +28,7 @@ export function addButtonObservable() {
   const tempPoints: Mesh[] = [];
   const canvas = scene.getEngine().getRenderingCanvas();
   const ground = scene.getMeshByName("ground");
+  console.log({ ground });
   const camera = scene.activeCamera;
 
   const getGroundPosition = () => {
@@ -31,10 +37,10 @@ export function addButtonObservable() {
       scene.pointerY,
       (mesh) => mesh === ground
     );
+    console.log("getGroundPosition", pickInfo);
     return pickInfo?.hit ? pickInfo.pickedPoint : null;
   };
 
-  // Handlers for Draw Mode
   const onDrawPointerTapHandler = (pointerInfo: PointerInfo) => {
     if (!pointerInfo.pickInfo) return;
 
@@ -45,7 +51,7 @@ export function addButtonObservable() {
     ) {
       switch (pointerInfo.event.inputIndex) {
         case PointerInput.LeftClick:
-          onLeftClick(pointerInfo);
+          createPoint(pointerInfo);
           break;
         case PointerInput.MiddleClick:
           console.log("MIDDLE");
@@ -57,7 +63,7 @@ export function addButtonObservable() {
     }
   };
 
-  function onLeftClick(pointerInfo: PointerInfo) {
+  function createPoint(pointerInfo: PointerInfo) {
     const pickedPoint = pointerInfo?.pickInfo?.pickedPoint;
     if (pickedPoint) {
       const pointSphere = MeshBuilder.CreateSphere(
@@ -74,15 +80,22 @@ export function addButtonObservable() {
       points.push(pointSphere.position);
       tempPoints.push(pointSphere);
       useBabylonState.getState().setPoints(points);
+
+      const event = new CustomEvent("pointCreated", {
+        detail: tempPoints,
+      });
+      window.dispatchEvent(event);
     }
   }
 
   function onRightClick() {
     if (points.length < 3) {
-      alert("Unable to create shape with less than 3 points!");
+      const event = new CustomEvent("updateInstructions", {
+        detail: "Please draw at least 3 points",
+      });
+      window.dispatchEvent(event);
       return;
     }
-
     points.push(points[0]);
     const idx = shapeToExtrude.length;
     const lines = MeshBuilder.CreateLines(
@@ -101,6 +114,10 @@ export function addButtonObservable() {
       point.dispose();
     });
     points = []; // Reset local points array for the next shape
+    const event = new CustomEvent("updateInstructions", {
+      detail: "Shape created! Extrution enabled",
+    });
+    window.dispatchEvent(event);
   }
 
   // Handlers for Move Mode
@@ -112,6 +129,7 @@ export function addButtonObservable() {
       scene.pointerY,
       (mesh) => mesh !== ground && mesh.id.startsWith("shapeExtruded")
     );
+    console.log("onPointerDownDrag", pickInfo);
     if (pickInfo?.hit) {
       currentMesh = pickInfo.pickedMesh;
       startingPoint = getGroundPosition();
@@ -124,6 +142,7 @@ export function addButtonObservable() {
 
   const onPointerUpDrag = () => {
     if (startingPoint && currentMesh) {
+      console.log("onPointerUpDrag");
       const material = new StandardMaterial("extrudedMaterial", scene);
       material.emissiveColor = new Color3(0, 128, 128);
       currentMesh.material = material;
@@ -136,6 +155,7 @@ export function addButtonObservable() {
   const onPointerMoveDrag = () => {
     if (!startingPoint || !currentMesh) return;
 
+    console.log("onPointerMoveDrag");
     const current = getGroundPosition();
     if (!current) return;
 
@@ -149,19 +169,79 @@ export function addButtonObservable() {
     startingPoint = current;
   };
 
+  // Selecting the Extruded Mesh on Edit Mode
+  const hl = new HighlightLayer("hl", scene);
+  // Add the highlight layer.
+  const onPointerEditMove = function () {
+    console.log("onPointerEditMove");
+    const result = scene.pick(scene.pointerX, scene.pointerY);
+    hl.removeAllMeshes();
+    // mesh !== ground && mesh.id.startsWith("shapeExtruded")
+    if (result.pickedMesh && result.pickedMesh.id.startsWith("shapeExtruded")) {
+      useBabylonState.getState().setSelectedMesh(result.pickedMesh as Mesh);
+      hl.addMesh(result.pickedMesh as Mesh, Color3.Blue());
+    }
+  };
+
+  const onPointerEditDown = function (evt: PointerEvent) {
+    console.log("onPointerEditDown");
+    const selectedMesh = useBabylonState.getState().getSelectedMesh();
+    if (selectedMesh) {
+      console.log(selectedMesh);
+      onMeshSelection();
+      const mesh = scene.getMeshById(selectedMesh.id);
+      if (mesh) {
+        console.log("Mesh found", mesh);
+        const { vertexMarkers, cornerGroups, markerInstances } =
+          createVertexMarkersAndLines(selectedMesh, scene);
+        console.log(
+          "attachGizmoAndHandleUpdates",
+          vertexMarkers,
+          // lineMeshes,
+          cornerGroups
+        );
+        // canvas?.addEventListener("pointerdown", onPointerEditDown2);
+        attachGizmoAndHandleUpdates(
+          scene,
+          mesh as Mesh,
+          vertexMarkers,
+          cornerGroups,
+          markerInstances
+        );
+      }
+    }
+  };
+  const onPointerEditDown2 = function (evt: PointerEvent) {
+    const result = scene.pick(scene.pointerX, scene.pointerY);
+    console.log("onPointerEditDown2", result);
+  };
+
+  const onMeshSelection = function () {
+    canvas?.removeEventListener("pointermove", onPointerEditMove, false);
+    canvas?.removeEventListener("pointerdown", onPointerEditDown, false);
+  };
+
   // Manage observers based on the current mode
   const manageObserver = (mode: "draw" | "move" | "edit") => {
     scene.onPointerObservable.removeCallback(onDrawPointerTapHandler);
+
     canvas?.removeEventListener("pointerdown", onPointerDownDrag);
     canvas?.removeEventListener("pointerup", onPointerUpDrag);
     canvas?.removeEventListener("pointermove", onPointerMoveDrag);
 
+    canvas?.removeEventListener("pointermove", onPointerEditMove, false);
+    canvas?.removeEventListener("pointerdown", onPointerEditDown, false);
+    //
+    canvas?.removeEventListener("pointerdown", onPointerEditDown2, false);
     if (mode === "draw") {
       scene.onPointerObservable.add(onDrawPointerTapHandler);
     } else if (mode === "move") {
       canvas?.addEventListener("pointerdown", onPointerDownDrag, false);
       canvas?.addEventListener("pointerup", onPointerUpDrag, false);
       canvas?.addEventListener("pointermove", onPointerMoveDrag, false);
+    } else if (mode === "edit") {
+      canvas?.addEventListener("pointermove", onPointerEditMove, false);
+      canvas?.addEventListener("pointerdown", onPointerEditDown, false);
     }
   };
 

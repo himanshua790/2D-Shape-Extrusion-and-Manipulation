@@ -24,10 +24,10 @@ export function extrudeShape() {
       // Extrude the shape with a constant height of 5
       const extrusion = BABYLON.MeshBuilder.ExtrudePolygon(
         extrudedShapeUniqueId,
-        { shape: shapesToExtrude[i], depth: 5, updatable: true },
+        { shape: shapesToExtrude[i], depth: 3, updatable: true },
         scene
       );
-      extrusion.position.y = 5;
+      extrusion.position.y = 3;
 
       // Extruded shape UI Enhancements
       const material = new BABYLON.StandardMaterial("extrudedMaterial", scene);
@@ -37,6 +37,7 @@ export function extrudeShape() {
       extrusion.enableEdgesRendering();
       extrusion.edgesWidth = 4.0;
       extrusion.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
+      extrusion.isPickable = true;
 
       // Map shape ID to its associated points in `shapePointsMap`
       const shapePointsMap = useBabylonState.getState().getShapePointsMap();

@@ -6,13 +6,11 @@ import { DefaultLoadingScreen } from "@babylonjs/core/Loading/loadingScreen";
 import { Vector3 } from "@babylonjs/core/Maths/math";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { Scene } from "@babylonjs/core/scene";
-import { addBottomGui } from "./GUI/BottomGui";
+import { addBottomGui } from "./GUI/mainGui";
 import "./index.css";
 import useBabylonState from "./lib/useBabylonState"; // Import Zustand store
 import { getGridMaterial } from "./materials/gridMaterial";
-import {
-  addButtonObservable
-} from "./utils/DrawObservables";
+import { addButtonObservable } from "./utils/DrawObservables";
 
 DefaultLoadingScreen.prototype.displayLoadingUI = () => {};
 
@@ -79,3 +77,6 @@ addBottomGui();
 
 // Run the Babylon.js render loop
 engine.runRenderLoop(() => scene.render());
+window.addEventListener("resize", function () {
+  engine.resize();
+});

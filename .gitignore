@@ -77,3 +77,6 @@ public/*.js
 build
 web_modules
 node_modules
+
+# Test Files
+test.js

@@ -1,16 +1,18 @@
-import { DefaultLoadingScreen } from "@babylonjs/core/Loading/loadingScreen";
-import "./index.css";
+import { HemisphericLight } from "@babylonjs/core";
+import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
-import { Scene } from "@babylonjs/core/scene";
-import { Color3, Vector3 } from "@babylonjs/core/Maths/math";
-import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { DefaultLoadingScreen } from "@babylonjs/core/Loading/loadingScreen";
+import { Vector3 } from "@babylonjs/core/Maths/math";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
-import { getGridMaterial } from "./materials/gridMaterial";
-import { addButtonObservable } from "./utils/Observables";
-import { HemisphericLight } from "@babylonjs/core";
+import { Scene } from "@babylonjs/core/scene";
 import { addBottomGui } from "./GUI/BottomGui";
+import "./index.css";
 import useBabylonState from "./lib/useBabylonState"; // Import Zustand store
+import { getGridMaterial } from "./materials/gridMaterial";
+import {
+  addButtonObservable
+} from "./utils/DrawObservables";
 
 DefaultLoadingScreen.prototype.displayLoadingUI = () => {};
 

@@ -1,6 +1,7 @@
 import * as GUI from "@babylonjs/gui";
 import useBabylonState from "../lib/useBabylonState";
 import { extrudeShape } from "../utils/Extrude";
+import { toggleDebugMode } from "../debug/appDebug";
 
 export async function addBottomGui() {
   const scene = useBabylonState.getState().getScene();
@@ -17,7 +18,7 @@ export async function addBottomGui() {
     true
   );
 
-  await advancedTexture.parseFromSnippetAsync("EOF1Q0#3");
+  await advancedTexture.parseFromSnippetAsync("EOF1Q0#6");
 
   // Get buttons by name
   const drawButton = advancedTexture.getControlByName(
@@ -34,6 +35,9 @@ export async function addBottomGui() {
   ) as GUI.Button;
   const moveButton = advancedTexture.getControlByName(
     "moveButton"
+  ) as GUI.Button;
+  const inspectorButton = advancedTexture.getControlByName(
+    "inspectorButton"
   ) as GUI.Button;
 
   // Function to update button backgrounds based on the mode
@@ -71,6 +75,11 @@ export async function addBottomGui() {
 
   resetButton.onPointerUpObservable.add(() => {
     console.log("Reset action triggered");
+  });
+
+  inspectorButton.onPointerUpObservable.add(() => {
+    console.log("Inspector action triggered");
+    toggleDebugMode()
   });
 
   // Initial background update based on current mode

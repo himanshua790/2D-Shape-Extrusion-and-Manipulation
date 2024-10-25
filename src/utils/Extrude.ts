@@ -1,6 +1,6 @@
 import Earcut from "earcut";
 import * as BABYLON from "@babylonjs/core";
-import useBabylonState from "../lib/useBabylonState"; // Import Zustand store
+import useBabylonState from "../lib/useBabylonState";
 
 export function extrudeShape() {
   const scene = useBabylonState.getState().getScene();
@@ -37,6 +37,11 @@ export function extrudeShape() {
       extrusion.enableEdgesRendering();
       extrusion.edgesWidth = 4.0;
       extrusion.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
+
+      // Map shape ID to its associated points in `shapePointsMap`
+      const shapePointsMap = useBabylonState.getState().getShapePointsMap();
+      shapePointsMap.set(extrudedShapeUniqueId, shapesToExtrude[i]);
+      useBabylonState.getState().setShapePointsMap(shapePointsMap);
 
       // Mark shape as extruded
       shapesExtruded[i] = true;

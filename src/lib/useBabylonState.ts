@@ -9,21 +9,23 @@ interface BabylonState {
   points: Vector3[];
   shapeToExtrude: Vector3[][];
   shapesExtruded: boolean[];
+  shapePointsMap: Map<string, Vector3[]>; // Map to store points for each extruded shape
 
   getScene: () => Scene | null;
   getMode: () => "draw" | "move" | "edit";
   getPoints: () => Vector3[];
   getShapeToExtrude: () => Vector3[][];
   getShapesExtruded: () => boolean[];
+  getShapePointsMap: () => Map<string, Vector3[]>;
 
   setScene: (scene: Scene) => void;
   setMode: (mode: "draw" | "move" | "edit") => void;
   setPoints: (points: Vector3[]) => void;
   setShapeToExtrude: (shape: Vector3[][]) => void;
   setMarkAsExtruded: (list: boolean[]) => void;
+  setShapePointsMap: (map: Map<string, Vector3[]>) => void;
 }
 
-// Apply `subscribeWithSelector` middleware to the Zustand store
 const useBabylonState = createStore(
   subscribeWithSelector<BabylonState>((set, get) => ({
     scene: null,
@@ -31,18 +33,21 @@ const useBabylonState = createStore(
     points: [],
     shapeToExtrude: [],
     shapesExtruded: [],
+    shapePointsMap: new Map<string, Vector3[]>(),
 
     getScene: () => get().scene,
     getMode: () => get().mode,
     getPoints: () => get().points,
     getShapeToExtrude: () => get().shapeToExtrude,
     getShapesExtruded: () => get().shapesExtruded,
+    getShapePointsMap: () => get().shapePointsMap,
 
     setScene: (scene) => set({ scene }),
     setMode: (mode) => set({ mode }),
     setPoints: (points) => set({ points }),
     setShapeToExtrude: (shape) => set({ shapeToExtrude: shape }),
     setMarkAsExtruded: (list) => set({ shapesExtruded: list }),
+    setShapePointsMap: (map) => set({ shapePointsMap: map }),
   }))
 );
 

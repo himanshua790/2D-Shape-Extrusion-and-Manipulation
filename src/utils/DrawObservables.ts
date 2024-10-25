@@ -9,8 +9,8 @@ import {
   StandardMaterial,
   Vector3,
 } from "@babylonjs/core";
-import useBabylonState from "../lib/useBabylonState";
-import { getPointerMaterial } from "../materials/pointerMaterial";
+import useBabylonState from "../state/GlobalState";
+import { getPointerMaterial } from "../materials/PointerMaterial";
 import {
   attachGizmoAndHandleUpdates,
   createVertexMarkersAndLines,
@@ -24,7 +24,7 @@ export function addButtonObservable() {
   let shapeToExtrude = useBabylonState.getState().getShapeToExtrude();
   let startingPoint: Vector3 | null = null;
   let currentMesh: any = null;
-
+  let tempVertexMarkers: Mesh[] = [];
   const tempPoints: Mesh[] = [];
   const canvas = scene.getEngine().getRenderingCanvas();
   const ground = scene.getMeshByName("ground");
@@ -37,7 +37,6 @@ export function addButtonObservable() {
       scene.pointerY,
       (mesh) => mesh === ground
     );
-    console.log("getGroundPosition", pickInfo);
     return pickInfo?.hit ? pickInfo.pickedPoint : null;
   };
 
@@ -129,7 +128,7 @@ export function addButtonObservable() {
       scene.pointerY,
       (mesh) => mesh !== ground && mesh.id.startsWith("shapeExtruded")
     );
-    console.log("onPointerDownDrag", pickInfo);
+    console.log("onPointerDownDrag", pickInfo, pickInfo.pickedMesh);
     if (pickInfo?.hit) {
       currentMesh = pickInfo.pickedMesh;
       startingPoint = getGroundPosition();
@@ -163,7 +162,7 @@ export function addButtonObservable() {
     currentMesh.position.addInPlace(diff);
 
     const lineMeshId = `lines${currentMesh.id.slice(13)}`;
-    const lineMesh = scene.getMeshByID(lineMeshId);
+    const lineMesh = scene.getMeshById(lineMeshId);
     lineMesh?.position.addInPlace(diff);
 
     startingPoint = current;
@@ -191,16 +190,15 @@ export function addButtonObservable() {
       onMeshSelection();
       const mesh = scene.getMeshById(selectedMesh.id);
       if (mesh) {
-        console.log("Mesh found", mesh);
         const { vertexMarkers, cornerGroups, markerInstances } =
-          createVertexMarkersAndLines(selectedMesh, scene);
+          createVertexMarkersAndLines(mesh, scene);
         console.log(
           "attachGizmoAndHandleUpdates",
           vertexMarkers,
           // lineMeshes,
           cornerGroups
         );
-        // canvas?.addEventListener("pointerdown", onPointerEditDown2);
+        tempVertexMarkers = vertexMarkers;
         attachGizmoAndHandleUpdates(
           scene,
           mesh as Mesh,
@@ -223,16 +221,7 @@ export function addButtonObservable() {
 
   // Manage observers based on the current mode
   const manageObserver = (mode: "draw" | "move" | "edit") => {
-    scene.onPointerObservable.removeCallback(onDrawPointerTapHandler);
-
-    canvas?.removeEventListener("pointerdown", onPointerDownDrag);
-    canvas?.removeEventListener("pointerup", onPointerUpDrag);
-    canvas?.removeEventListener("pointermove", onPointerMoveDrag);
-
-    canvas?.removeEventListener("pointermove", onPointerEditMove, false);
-    canvas?.removeEventListener("pointerdown", onPointerEditDown, false);
-    //
-    canvas?.removeEventListener("pointerdown", onPointerEditDown2, false);
+    cleanUp();
     if (mode === "draw") {
       scene.onPointerObservable.add(onDrawPointerTapHandler);
     } else if (mode === "move") {
@@ -244,6 +233,27 @@ export function addButtonObservable() {
       canvas?.addEventListener("pointerdown", onPointerEditDown, false);
     }
   };
+
+  const cleanUp = () => {
+    tempVertexMarkers.forEach((marker) => marker.dispose());
+    tempVertexMarkers = [];
+
+    scene.onPointerObservable.removeCallback(onDrawPointerTapHandler);
+
+    canvas?.removeEventListener("pointerdown", onPointerDownDrag);
+    canvas?.removeEventListener("pointerup", onPointerUpDrag);
+    canvas?.removeEventListener("pointermove", onPointerMoveDrag);
+
+    canvas?.removeEventListener("pointermove", onPointerEditMove, false);
+    canvas?.removeEventListener("pointerdown", onPointerEditDown, false);
+    //
+    canvas?.removeEventListener("pointerdown", onPointerEditDown2, false);
+  };
+
+  // Listener for custom instruction updates
+  window.addEventListener("cleanUp", () => {
+    cleanUp();
+  });
 
   // Initial setup based on the current mode
   manageObserver(useBabylonState.getState().getMode());

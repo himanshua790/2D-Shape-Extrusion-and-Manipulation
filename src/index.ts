@@ -6,10 +6,10 @@ import { DefaultLoadingScreen } from "@babylonjs/core/Loading/loadingScreen";
 import { Vector3 } from "@babylonjs/core/Maths/math";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { Scene } from "@babylonjs/core/scene";
-import { addBottomGui } from "./GUI/mainGui";
+import { addBottomGui } from "./components/MainGui";
 import "./index.css";
-import useBabylonState from "./lib/useBabylonState"; // Import Zustand store
-import { getGridMaterial } from "./materials/gridMaterial";
+import useBabylonState from "./state/GlobalState"; // Import Zustand store
+import { getGridMaterial } from "./materials/GridMaterial";
 import { addButtonObservable } from "./utils/DrawObservables";
 
 DefaultLoadingScreen.prototype.displayLoadingUI = () => {};

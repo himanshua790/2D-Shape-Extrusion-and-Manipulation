@@ -1,4 +1,5 @@
 import {
+  AbstractMesh,
   GizmoManager,
   Mesh,
   MeshBuilder,
@@ -7,20 +8,34 @@ import {
   Vector3,
   VertexBuffer,
 } from "@babylonjs/core";
-import { getPointerMaterial } from "../materials/pointerMaterial";
+import { getPointerMaterial } from "../materials/PointerMaterial";
 
-export function createVertexMarkersAndLines(mesh: Mesh, scene: Scene) {
+const vertexMarkers: Mesh[] = [];
+let selectedMeshId = "";
+
+export function createVertexMarkersAndLines(mesh: AbstractMesh, scene: Scene) {
+  selectedMeshId = mesh.id;
+  vertexMarkers.forEach((marker) => {
+    marker.dispose();
+  });
+  vertexMarkers.length = 0;
   const vertices = mesh.getVerticesData(VertexBuffer.PositionKind) as number[];
   const cornerGroups: Map<string, number[]> = new Map();
-  const vertexMarkers: Mesh[] = [];
+
   const markerInstances: Vector3[] = []; // Store references for updates
 
   // Group vertices by similar positions
   for (let i = 0; i < vertices.length; i += 3) {
-    const vertexPosition = new Vector3(vertices[i], vertices[i + 1] + 3, vertices[i + 2]);
+    const vertexPosition = new Vector3(
+      vertices[i],
+      vertices[i + 1] + 3,
+      vertices[i + 2]
+    );
     markerInstances.push(vertexPosition); // Store position reference
 
-    const key = `${vertexPosition.x.toFixed(3)},${vertexPosition.y.toFixed(3)},${vertexPosition.z.toFixed(3)}`;
+    const key = `${vertexPosition.x.toFixed(3)},${vertexPosition.y.toFixed(
+      3
+    )},${vertexPosition.z.toFixed(3)}`;
     if (!cornerGroups.has(key)) {
       cornerGroups.set(key, []);
     }
@@ -50,7 +65,8 @@ export function attachGizmoAndHandleUpdates(
   markerInstances: Vector3[]
 ) {
   const gizmoManager = new GizmoManager(scene);
-  gizmoManager.positionGizmoEnabled = true;
+  // Disable automatic attachment of the gizmo to selected meshes
+  gizmoManager.attachToMesh(null);
 
   let initialPickOrigin = new Vector3();
 
@@ -81,7 +97,9 @@ export function attachGizmoAndHandleUpdates(
     indices.forEach((idx) => {
       markerInstances[idx].addInPlace(delta); // Update stored positions
 
-      const vertices = mainMesh.getVerticesData(VertexBuffer.PositionKind) as number[];
+      const vertices = mainMesh.getVerticesData(
+        VertexBuffer.PositionKind
+      ) as number[];
       vertices[idx * 3] = markerInstances[idx].x;
       vertices[idx * 3 + 1] = markerInstances[idx].y - 3; // Adjust for extrusion height
       vertices[idx * 3 + 2] = markerInstances[idx].z;
@@ -100,7 +118,9 @@ export function attachGizmoAndHandleUpdates(
     const indices = cornerGroups.get(pickedMesh.id);
     if (!indices) return;
 
-    const vertices = mainMesh.getVerticesData(VertexBuffer.PositionKind) as number[];
+    const vertices = mainMesh.getVerticesData(
+      VertexBuffer.PositionKind
+    ) as number[];
     indices.forEach((idx) => {
       vertices[idx * 3] = markerInstances[idx].x;
       vertices[idx * 3 + 1] = markerInstances[idx].y - 3;

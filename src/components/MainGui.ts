@@ -1,7 +1,7 @@
 import { Vector3 } from "@babylonjs/core";
 import * as GUI from "@babylonjs/gui";
 import { toggleDebugMode } from "../debug/appDebug";
-import useBabylonState from "../lib/useBabylonState";
+import useBabylonState from "../state/GlobalState";
 import { extrudeShape } from "../utils/Extrude";
 
 /**

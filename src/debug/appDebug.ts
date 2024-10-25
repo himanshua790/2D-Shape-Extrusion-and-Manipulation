@@ -3,7 +3,7 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/core/Legacy/legacy";
 import "@babylonjs/inspector";
-import useBabylonState from "../lib/useBabylonState";
+import useBabylonState from "../state/GlobalState";
 
 /**
  * Toggles on/off the inspector in the scene.

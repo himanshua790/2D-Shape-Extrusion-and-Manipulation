@@ -1,6 +1,6 @@
 import Earcut from "earcut";
 import * as BABYLON from "@babylonjs/core";
-import useBabylonState from "../lib/useBabylonState";
+import useBabylonState from "../state/GlobalState";
 
 export function extrudeShape() {
   const scene = useBabylonState.getState().getScene();

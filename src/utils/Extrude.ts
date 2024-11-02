@@ -29,20 +29,26 @@ export function extrudeShape() {
       );
       extrusion.position.y = 3;
 
+      // Update vertex positions and normals
+      const positions = extrusion.getVerticesData(
+        BABYLON.VertexBuffer.PositionKind
+      ) as BABYLON.FloatArray;
+      extrusion.setVerticesData(
+        BABYLON.VertexBuffer.PositionKind,
+        positions,
+        true
+      );
+      const normals = extrusion.getVerticesData(
+        BABYLON.VertexBuffer.NormalKind
+      ) as BABYLON.FloatArray;
+      extrusion.setVerticesData(BABYLON.VertexBuffer.NormalKind, normals, true);
+
       // Extruded shape UI Enhancements
       const material = new BABYLON.StandardMaterial("extrudedMaterial", scene);
       material.emissiveColor = new BABYLON.Color3(0, 128, 128);
       material.backFaceCulling = false;
       extrusion.material = material;
-      extrusion.enableEdgesRendering();
-      extrusion.edgesWidth = 4.0;
-      extrusion.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
       extrusion.isPickable = true;
-
-      // Map shape ID to its associated points in `shapePointsMap`
-      const shapePointsMap = useBabylonState.getState().getShapePointsMap();
-      shapePointsMap.set(extrudedShapeUniqueId, shapesToExtrude[i]);
-      useBabylonState.getState().setShapePointsMap(shapePointsMap);
 
       // Mark shape as extruded
       shapesExtruded[i] = true;

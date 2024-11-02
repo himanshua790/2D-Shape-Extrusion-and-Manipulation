@@ -1,7 +1,6 @@
 import { HemisphericLight } from "@babylonjs/core";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { Engine } from "@babylonjs/core/Engines/engine";
-import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
 import { DefaultLoadingScreen } from "@babylonjs/core/Loading/loadingScreen";
 import { Vector3 } from "@babylonjs/core/Maths/math";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
@@ -20,15 +19,7 @@ document.body.append(canvas);
 const antialias = true;
 const adaptToDeviceRatio = true;
 
-let engine: Engine | WebGPUEngine;
-
-if (navigator.gpu) {
-  engine = new WebGPUEngine(canvas, { antialias, adaptToDeviceRatio });
-  await (engine as WebGPUEngine).initAsync();
-} else {
-  engine = new Engine(canvas, antialias, {}, adaptToDeviceRatio);
-}
-
+const engine = new Engine(canvas, antialias, {}, adaptToDeviceRatio);
 const scene = new Scene(engine);
 
 // Store the scene in Zustand state

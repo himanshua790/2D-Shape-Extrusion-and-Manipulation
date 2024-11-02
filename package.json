@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "homepage": "https://himanshua790.github.io/2d-shape-extrusion-and-manipulation/",
+  "homepage": "https://himanshua790.github.io/2D-Shape-Extrusion-and-Manipulation/",
   "scripts": {
     "start": "vite --host --open",
     "build": "vite build",

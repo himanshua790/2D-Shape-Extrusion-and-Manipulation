@@ -21,5 +21,5 @@ export default defineConfig({
   worker: {
     format: "es",
   },
-  base: "/2d-shape-extrusion-and-manipulation/",
+  base: "/2D-Shape-Extrusion-and-Manipulation/",
 });

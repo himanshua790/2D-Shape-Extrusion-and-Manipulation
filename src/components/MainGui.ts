@@ -22,7 +22,7 @@ export async function addBottomGui() {
     5,
     true
   );
-  await advancedTexture.parseFromSnippetAsync("EOF1Q0#7");
+  await advancedTexture.parseFromSnippetAsync("EOF1Q0#8");
 
   // Get buttons and instruction text by name
   const drawButton = advancedTexture.getControlByName(

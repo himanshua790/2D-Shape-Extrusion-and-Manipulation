@@ -19,7 +19,6 @@ let drawObserver: Nullable<Observer<PointerInfo>> = null;
 
 export function setupDrawMode(scene: Scene) {
   const ground = scene.getMeshByName("ground");
-
   const onDrawPointerTapHandler = (pointerInfo: PointerInfo) => {
     if (!pointerInfo.pickInfo) return;
     if (
@@ -62,6 +61,11 @@ function createPoint(pointerInfo: PointerInfo, scene: Scene) {
     ];
     useBabylonState.getState().setPoints(points);
     tempPoints.push(pointSphere);
+
+    const event = new CustomEvent("pointCreated", {
+      detail: tempPoints,
+    });
+    window.dispatchEvent(event);
   }
 }
 

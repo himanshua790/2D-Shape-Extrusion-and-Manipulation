@@ -6,6 +6,7 @@ export function extrudeShape() {
   const scene = useBabylonState.getState().getScene();
   const shapesToExtrude = useBabylonState.getState().getShapeToExtrude();
   const shapesExtruded = useBabylonState.getState().getShapesExtruded();
+  const extrudeHeight = useBabylonState.getState().extrudeLength;
 
   if (!scene) return;
 
@@ -21,31 +22,23 @@ export function extrudeShape() {
 
       // Injecting Earcut algorithm
       (window as any).earcut = Earcut;
-      // Extrude the shape with a constant height of 5
+
+      // Extrude the shape upwards by using a negative depth
       const extrusion = BABYLON.MeshBuilder.ExtrudePolygon(
         extrudedShapeUniqueId,
-        { shape: shapesToExtrude[i], depth: 3, updatable: true },
+        { shape: shapesToExtrude[i], depth: extrudeHeight, updatable: true },
         scene
       );
-      extrusion.position.y = 3;
 
+      // Set the position of the extrusion to start at ground level
+      extrusion.position.y = extrudeHeight;
       // Update vertex positions and normals
-      const positions = extrusion.getVerticesData(
-        BABYLON.VertexBuffer.PositionKind
-      ) as BABYLON.FloatArray;
-      extrusion.setVerticesData(
-        BABYLON.VertexBuffer.PositionKind,
-        positions,
-        true
-      );
-      const normals = extrusion.getVerticesData(
-        BABYLON.VertexBuffer.NormalKind
-      ) as BABYLON.FloatArray;
-      extrusion.setVerticesData(BABYLON.VertexBuffer.NormalKind, normals, true);
+      extrusion.bakeCurrentTransformIntoVertices();
+      extrusion.position = BABYLON.Vector3.Zero();
 
       // Extruded shape UI Enhancements
       const material = new BABYLON.StandardMaterial("extrudedMaterial", scene);
-      material.emissiveColor = new BABYLON.Color3(0, 128, 128);
+      material.emissiveColor = new BABYLON.Color3(0, 0.5, 0.5);
       material.backFaceCulling = false;
       extrusion.material = material;
       extrusion.isPickable = true;

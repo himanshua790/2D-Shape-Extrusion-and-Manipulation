@@ -1,87 +1,85 @@
-// Assume scene and engine are already created
-
+// components/VertexEdit.ts
 import {
-  Color3,
+  Mesh,
   MeshBuilder,
   PointerDragBehavior,
   StandardMaterial,
+  Color3,
   Vector3,
+  Scene,
   VertexBuffer,
-  type Mesh,
 } from "@babylonjs/core";
 import useBabylonState from "../state/GlobalState";
 
-// ... (Create ground plane and initial meshes)
+export function enterVertexEditMode(mesh: Mesh, scene: Scene) {
+  const vertexMarkers: Mesh[] = [];
+  const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
 
-// Variables to keep track of state
-var vertexSpheres = [];
+  if (!positions) return;
 
-// Function to enter vertex edit mode
-export function enterVertexEditMode(mesh: Mesh) {
-  useBabylonState.getState().setMode("edit");
-  showVertices(mesh);
-}
-
-// Function to show vertices
-function showVertices(mesh: Mesh) {
-  const scene = mesh.getScene();
-  var positions = mesh.getVerticesData(
-    VertexBuffer.PositionKind
-  ) as Float32Array;
-
+  // Create a sphere marker for each vertex
   for (let i = 0; i < positions.length; i += 3) {
-    let x = positions[i];
-    let y = positions[i + 1];
-    let z = positions[i + 2];
-
-    let sphere = MeshBuilder.CreateSphere(
-      "vertexSphere",
-      { diameter: 0.1 },
-      scene
-    );
-    sphere.position = new Vector3(x, y, z);
-    const sphereMaterial = new StandardMaterial("vertexMat", scene);
-    sphereMaterial.diffuseColor = Color3.Green();
-    sphere.material = sphereMaterial;
-    sphere.isPickable = true;
-
-    var dragBehavior = new PointerDragBehavior({
-      dragPlaneNormal: new Vector3(0, 1, 0),
-    });
-    dragBehavior.useObjectOrientationForDragging = false;
-    sphere.addBehavior(dragBehavior);
-
-    dragBehavior.onDragObservable.add((event) => {
-      updateVertexPosition(mesh, sphere, event.dragPlanePoint);
-    });
-
-    vertexSpheres.push(sphere);
-  }
-}
-
-// Function to update vertex positions
-function updateVertexPosition(mesh: Mesh, sphere: Mesh, newPosition: Vector3) {
-  var positions = mesh.getVerticesData(
-    VertexBuffer.PositionKind
-  ) as Float32Array;
-
-  for (let i = 0; i < positions.length; i += 3) {
-    let vertexPos = new Vector3(
+    const vertexPosition = new Vector3(
       positions[i],
       positions[i + 1],
       positions[i + 2]
     );
 
-    if (vertexPos.equalsWithEpsilon(sphere.position, 0.1)) {
-      positions[i] = newPosition.x;
-      positions[i + 1] = newPosition.y;
-      positions[i + 2] = newPosition.z;
+    const marker = MeshBuilder.CreateSphere(
+      `vertexMarker_${i / 3}`,
+      { diameter: 0.1 },
+      scene
+    );
+    marker.position = vertexPosition.clone();
+    const material = new StandardMaterial(
+      "vertexMarkerMat",
+      scene
+    ) as StandardMaterial;
+    material.diffuseColor = new Color3(1, 0, 0);
+    marker.material = material;
+    marker.isPickable = true;
 
-      sphere.position = newPosition;
+    // Add drag behavior
+    const dragBehavior = new PointerDragBehavior({
+      dragPlaneNormal: new Vector3(0, 1, 0),
+    });
+    dragBehavior.moveAttached = false; // We'll handle movement manually
+    marker.addBehavior(dragBehavior);
 
-      break;
-    }
+    dragBehavior.onDragObservable.add((event) => {
+      const newPosition = event.dragPlanePoint;
+      //   updateVertexPosition(mesh, i, newPosition, scene);
+      updateVertexPosition(mesh, i, newPosition);
+      marker.position.copyFrom(newPosition);
+    });
+
+    vertexMarkers.push(marker);
   }
 
+  // Store markers in state for cleanup later
+  useBabylonState.getState().setVertexMarkers(vertexMarkers);
+}
+
+function updateVertexPosition(
+  mesh: Mesh,
+  index: number,
+  newPosition: Vector3
+  //   scene: Scene
+) {
+  const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
+
+  if (!positions) return;
+
+  positions[index] = newPosition.x;
+  positions[index + 1] = newPosition.y;
+  positions[index + 2] = newPosition.z;
+
   mesh.updateVerticesData(VertexBuffer.PositionKind, positions);
+  mesh.refreshBoundingInfo();
+}
+
+export function exitVertexEditMode() {
+  const vertexMarkers = useBabylonState.getState().getVertexMarkers();
+  vertexMarkers.forEach((marker) => marker.dispose());
+  useBabylonState.getState().setVertexMarkers([]);
 }

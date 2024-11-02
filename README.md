@@ -36,7 +36,7 @@ Create an interactive 3D environment in which users can draw 2D shapes, extrude 
 - [x] **Move Mode**: Allow moving of extruded shapes on the ground plane.
     - Enable click-and-drag for movement.
     - Provide a **"Move"** button to enter Move Mode.
-- [ ] **Vertex Edit Mode**: Allow editing of vertices for extruded objects.
+- [x] **Vertex Edit Mode**: Allow editing of vertices for extruded objects.
     - *Click-and-drag*: Adjust vertex position.
     - Enable free movement of all vertices in 3D space.
     - Provide a **"Vertex Edit"** button to enter Vertex Edit Mode.
@@ -55,6 +55,6 @@ Create an interactive 3D environment in which users can draw 2D shapes, extrude 
 
 **WakaTime Stats (Oct 24 - Oct 26, 2024)**  
 Total Time Worked: 11.5 hours  
-[View detailed WakaTime stats](https://wakatime.com/@4aac6ac3-4782-4ee1-a6bf-077e0a29aa8e/projects/zbklmmralc?start=2024-10-20&end=2024-10-26)
+[View detailed WakaTime stats](https://wakatime.com/@4aac6ac3-4782-4ee1-a6bf-077e0a29aa8e/projects/zbklmmralc?start=2024-10-27&end=2024-11-02)
 
 ---

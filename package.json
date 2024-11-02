@@ -1,13 +1,17 @@
 {
   "type": "module",
+  "homepage": "https://himanshua790.github.io/2d-shape-extrusion-and-manipulation/",
   "scripts": {
     "start": "vite --host --open",
     "build": "vite build",
     "preview": "vite preview --host --open",
-    "check": "tsc"
+    "check": "tsc",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
     "@types/earcut": "^2.1.4",
+    "gh-pages": "^6.2.0",
     "typescript": "^5.0.4",
     "vite": "^4.3.1",
     "vite-plugin-static-copy": "^0.14.0"

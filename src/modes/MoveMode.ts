@@ -10,6 +10,9 @@ export function setupMoveMode(scene: Scene) {
   const ground = scene.getMeshByName("ground");
   const camera = scene.activeCamera;
 
+  if (ground) {
+    ground.isPickable = true; // Prevent the mesh from being picked
+  }
   const getGroundPosition = () => {
     const pickInfo = scene.pick(
       scene.pointerX,
@@ -20,6 +23,7 @@ export function setupMoveMode(scene: Scene) {
   };
 
   const onPointerDown = (evt: PointerEvent) => {
+    console.log("onPointerDown - Move Mode", evt.button, evt.buttons);
     if (evt.button !== 0) return;
 
     const pickInfo = scene.pick(

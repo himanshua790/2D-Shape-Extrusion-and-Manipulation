@@ -18,7 +18,8 @@ let tempPoints: Mesh[] = [];
 let drawObserver: Nullable<Observer<PointerInfo>> = null;
 
 export function setupDrawMode(scene: Scene) {
-  const ground = scene.getMeshByName("ground");
+  const ground = scene.getMeshByName("ground") as Mesh;
+  ground.isPickable = true;
   const onDrawPointerTapHandler = (pointerInfo: PointerInfo) => {
     if (!pointerInfo.pickInfo) return;
     if (

@@ -9,6 +9,10 @@ export function setupEditMode(scene: Scene) {
   hl = new HighlightLayer("hl", scene);
   const canvas = scene.getEngine().getRenderingCanvas();
 
+  const ground = scene.getMeshByName("ground");
+  if (ground) {
+    ground.isPickable = false; // Prevent the mesh from being picked
+  }
   const onPointerMove = () => {
     const pickResult = scene.pick(scene.pointerX, scene.pointerY);
     hl.removeAllMeshes();
@@ -22,6 +26,7 @@ export function setupEditMode(scene: Scene) {
   };
 
   const onPointerDown = (evt: PointerEvent) => {
+    console.log("onPointerDown - Edit Mode", evt.button, evt.buttons);
     if (evt.button !== 0) return;
 
     const selectedMesh = useBabylonState.getState().getSelectedMesh();
@@ -29,6 +34,8 @@ export function setupEditMode(scene: Scene) {
       enterVertexEditMode(selectedMesh, scene);
       canvas?.removeEventListener("pointermove", onPointerMove);
       canvas?.removeEventListener("pointerdown", onPointerDown);
+      // cleanup hightlight layer
+      hl.removeAllMeshes();
     }
   };
 

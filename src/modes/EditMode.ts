@@ -36,6 +36,7 @@ export function setupEditMode(scene: Scene) {
       canvas?.removeEventListener("pointerdown", onPointerDown);
       // cleanup hightlight layer
       hl.removeAllMeshes();
+      useBabylonState.getState().setSelectedMesh(null);
     }
   };
 
